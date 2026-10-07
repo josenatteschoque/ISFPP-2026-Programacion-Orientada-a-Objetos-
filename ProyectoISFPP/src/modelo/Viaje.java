@@ -8,6 +8,7 @@ import java.util.UUID;
 import enums.CalificacionViaje;
 import enums.RolUsuario;
 import enums.EstadoViaje;
+import enums.EstadoConductor;
 
 public class Viaje {
 	private UUID id;
@@ -40,22 +41,27 @@ public class Viaje {
 	}
 
 	public void solicitar(LocalDateTime fechaHora) {
-
 		if (!registroViaje.isEmpty()) {
 			throw new IllegalStateException("El viaje ya fue solicitado");
 		}
-
+		if (cliente.getCliente().enViaje()) {
+			throw new IllegalStateException("El cliente ya tiene un viaje activo");
+		}
 		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.SOLICITADO));
-
 		this.cliente.getCliente().agregarViaje(this);
 	}
 
 	public void aceptar(LocalDateTime fechaHora, Usuario conductor) {
-
 		if (estadoActual() != EstadoViaje.SOLICITADO) {
 			throw new IllegalStateException("El viaje no esta solicitado");
 		}
+		Vehiculo vehiculoConductor = conductor.getConductor().getVehiculoActivo();
+		if (vehiculoConductor.getCategoriaVehiculo().getValor() < servicio.getCategoriaVehiculo().getValor()) {
+			throw new IllegalStateException("El vehiculo no cumple con la categoria solicitada");
+		}
 		this.conductor = conductor;
+		this.vehiculo = vehiculoConductor;
+		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_ORIGEN);
 		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
 	}
 
@@ -64,16 +70,18 @@ public class Viaje {
 		if (estadoActual() != EstadoViaje.ACEPTADO) {
 			throw new IllegalStateException("El viaje no esta aceptado");
 		}
+		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_DESTINO);
 		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.INICIADO));
 	}
 
-	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionConductor,
-			CalificacionViaje calificacionCliente) {
+	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionCliente,
+			CalificacionViaje calificacionConductor) {
 		if (estadoActual() != EstadoViaje.INICIADO) {
 			throw new IllegalStateException("El viaje no esta iniciado");
 		}
-		this.calificacionConductor = calificacionConductor;
 		this.calificacionCliente = calificacionCliente;
+		this.calificacionConductor = calificacionConductor;
+		conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
 		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.FINALIZADO));
 	}
 
@@ -88,14 +96,17 @@ public class Viaje {
 		} else if (usuario.equals(conductor)) {
 			this.rolCancela = RolUsuario.CONDUCTOR;
 		} else {
+
 			throw new IllegalArgumentException("El usuario no pertenece al viaje");
 		}
 		this.motivoCancelacion = motivo;
+		if (conductor != null) {
+			conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
+		}
 		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.CANCELADO));
 	}
 
 	public void rechazar(LocalDateTime fechaHora) {
-
 		if (estadoActual() != EstadoViaje.SOLICITADO) {
 			throw new IllegalStateException("El viaje no esta solicitado");
 		}
