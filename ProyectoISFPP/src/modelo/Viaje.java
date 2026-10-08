@@ -35,90 +35,115 @@ public class Viaje {
 		this.cliente = cliente;
 		this.registroViaje = new ArrayList<>();
 	}
-
+	//segundo constructor para los test Junit
 	public Viaje(Usuario cliente, Ubicacion origen, Ubicacion destino, Servicio servicio) {
+		
 		this(UUID.randomUUID(), origen, destino, servicio, cliente);
 	}
+	
 
 	public void solicitar(LocalDateTime fechaHora) {
-		if (!registroViaje.isEmpty()) {
+		if (!registroViaje.isEmpty()) {//solo veirica que el viaje ya este en algunos de los estados  ya que dicha list guarda el historial de estados del viaje
 			throw new IllegalStateException("El viaje ya fue solicitado");
 		}
 		if (cliente.getCliente().enViaje()) {
 			throw new IllegalStateException("El cliente ya tiene un viaje activo");
 		}
+		//si pasa dichas reviciones se crea un nuevo registro viaje 
 		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.SOLICITADO));
-		this.cliente.getCliente().agregarViaje(this);
+		this.cliente.getCliente().agregarViaje(this);//se le agrega dicho viaje a la lista del cliente
 	}
+	
+	
 
 	public void aceptar(LocalDateTime fechaHora, Usuario conductor) {
-		if (estadoActual() != EstadoViaje.SOLICITADO) {
+		if (estadoActual() != EstadoViaje.SOLICITADO) {//verifica que el viaje aun este en solicitud
 			throw new IllegalStateException("El viaje no esta solicitado");
 		}
-		Vehiculo vehiculoConductor = conductor.getConductor().getVehiculoActivo();
-		if (vehiculoConductor.getCategoriaVehiculo().getValor() < servicio.getCategoriaVehiculo().getValor()) {
-			throw new IllegalStateException("El vehiculo no cumple con la categoria solicitada");
+		Vehiculo vehiculoConductor = conductor.getConductor().getVehiculoActivo(); //asigno en vehiculo del cunductor
+		if (vehiculoConductor.getCategoriaVehiculo().getValor() < servicio.getCategoriaVehiculo().getValor()) {//veirfiaca si el vehiculo no cumple con la categoria sulicitada 
+			throw new IllegalStateException("El vehiculo no cumple con la categoria solicitada"); 
 		}
-		this.conductor = conductor;
-		this.vehiculo = vehiculoConductor;
-		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_ORIGEN);
-		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
+		//si paso los dictintos chequeos
+		this.conductor = conductor;//se le asigna al viaje un conductor que cuple las ocndiciones
+		this.vehiculo = vehiculoConductor;//el vehiculo pertenesiente a dicho conductor
+		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_ORIGEN);//se cambia el estado del conductor en vieje hacia la ubicacion del cliente
+		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));//se crea un nuevo registro de viaje para el registro general del viaje y lo coloca como aceptado
 	}
+	
+	
+	
 
 	public void iniciar(LocalDateTime fechaHora) {
 
-		if (estadoActual() != EstadoViaje.ACEPTADO) {
+		if (estadoActual() != EstadoViaje.ACEPTADO) {//verifica si el estado del viaje fue aceptado
 			throw new IllegalStateException("El viaje no esta aceptado");
 		}
-		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_DESTINO);
-		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.INICIADO));
+		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_DESTINO);//se modifica el estado del conductor
+		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.INICIADO));//cambia el registro general del viaje  y y crea un nuevo registro aceptado para el historial de registro
 	}
 
+	
+	
+	
+	
 	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionCliente,
 			CalificacionViaje calificacionConductor) {
-		if (estadoActual() != EstadoViaje.INICIADO) {
+		if (estadoActual() != EstadoViaje.INICIADO) {//verifica si el viaje fue previamente iniciado
 			throw new IllegalStateException("El viaje no esta iniciado");
 		}
-		this.calificacionCliente = calificacionCliente;
-		this.calificacionConductor = calificacionConductor;
-		conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
-		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.FINALIZADO));
+		this.calificacionCliente = calificacionCliente;//se le anade la caficacion al cliente
+		this.calificacionConductor = calificacionConductor;//se le añade la calificacion al conductor
+		conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);//como el viaje ya fue finalizado al estado del conductor vuelve a cambiar a disponible
+		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.FINALIZADO));//al registro general del viaje se le añade un nuevo registro finalizado
 	}
 
+	
+	
+	
 	public void cancelar(LocalDateTime fechaHora, Usuario usuario, String motivo) {
 
 		EstadoViaje estado = estadoActual();
-		if (estado == EstadoViaje.FINALIZADO || estado == EstadoViaje.CANCELADO || estado == EstadoViaje.RECHAZADO) {
+		if (estado == EstadoViaje.FINALIZADO || estado == EstadoViaje.CANCELADO || estado == EstadoViaje.RECHAZADO) {//antes de cancelar un viaje se verifica si este viaje no fue finalizado previamente o que no se alla cancelado o dicho viaje no fuera rechazado
 			throw new IllegalStateException("El viaje no se puede cancelar");
 		}
-		if (usuario.equals(cliente)) {
-			this.rolCancela = RolUsuario.CLIENTE;
-		} else if (usuario.equals(conductor)) {
-			this.rolCancela = RolUsuario.CONDUCTOR;
-		} else {
-
+		if (usuario.equals(cliente)) {//verifica que el lo cancele sea el usuario que solicito el viaje
+			this.rolCancela = RolUsuario.CLIENTE;//se avisa que el usuario fue el que cancelo el viaje
+		} else if (usuario.equals(conductor)) {//verifica que el usuario que cancelo el vaije sea el conductor
+			this.rolCancela = RolUsuario.CONDUCTOR;//se asigna que el que cancelo el viaje fue el mismo conductor
+		} else {//si ninguno de estos fue el que que pidio la cancelaciion del viaje entonces no se realiza dicha cancelacion
 			throw new IllegalArgumentException("El usuario no pertenece al viaje");
 		}
-		this.motivoCancelacion = motivo;
-		if (conductor != null) {
+		//si pasa todas las condiciones y dicha cancelacion es valida
+		this.motivoCancelacion = motivo;//se le asigna el motivo de la cancelacion
+		if (conductor != null) {//verifica si el conductor no es null y se coloca que el estado del conductor es disponible
 			conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
 		}
-		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.CANCELADO));
+		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.CANCELADO));//al historial de registro se le agraga un nuevo registro de tipo cancelado
 	}
+	
+	
+	
 
 	public void rechazar(LocalDateTime fechaHora) {
-		if (estadoActual() != EstadoViaje.SOLICITADO) {
+		if (estadoActual() != EstadoViaje.SOLICITADO) {//verica si el viaje fue solicitado si no es asi se le avisa que no se puede rechasar un viaje n solicitado
 			throw new IllegalStateException("El viaje no esta solicitado");
 		}
-		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.RECHAZADO));
+		this.registroViaje.add(new RegistroViaje(fechaHora, EstadoViaje.RECHAZADO));//si este viaje fue solicitado se le añade al registro general un registro de RACHAZO
 	}
 
+	
+	
+	
 	public EstadoViaje estadoActual() {
-		if (registroViaje.isEmpty()) {
+		if (registroViaje.isEmpty()) {//si el registro general del viaje esta vacion devuelve null
 			return null;
 		}
-		return this.registroViaje.get(this.registroViaje.size() - 1).getEstadoViaje();
+		return this.registroViaje.get(this.registroViaje.size() - 1).getEstadoViaje();//sino devuelve el registro actual o el ultimo registro que fue cargado al registro general
 	}
+	
+	
+	
 
 	// Getters y Setters
 	public UUID getId() {
