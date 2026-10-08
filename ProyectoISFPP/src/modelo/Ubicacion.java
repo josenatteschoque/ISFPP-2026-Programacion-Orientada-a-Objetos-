@@ -31,6 +31,7 @@ public class Ubicacion {
 	}
 	
 	public double calcularDistancia(Ubicacion otra) {
+		//se utiliza la formula de hearvane
 		if (otra == null) {
 			throw new IllegalArgumentException("La ubicacion no puede ser null");
 		}
