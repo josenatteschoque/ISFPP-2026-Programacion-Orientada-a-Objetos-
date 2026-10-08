@@ -64,22 +64,20 @@ public class Conductor {
 	
 	public void agregarVehiculo(Vehiculo vehiculo) {
 
-		if (vehiculo == null) {
-			throw new IllegalArgumentException(
-					"el conductor tiene que tener al menos un vehiculo");
+		if (vehiculo == null) {//revisa que el vehiculo no sea null
+			throw new IllegalArgumentException("el conductor tiene que tener al menos un vehiculo");
 		}
-
-		if (!vehiculos.contains(vehiculo)) {
-			vehiculos.add(vehiculo);
+		if (!vehiculos.contains(vehiculo)) {//verifiac si el vehiculo no fue previamente cargado ala lista
+			vehiculos.add(vehiculo);//si es asi lo carga
 		}
 	}
 	
 	public void agregarViaje(Viaje viaje) {
 		
-		if(viaje== null) {
+		if(viaje== null) {//verifiac que el viaje no sea null
 			throw new IllegalArgumentException("el viaje no puede ser null");
 		}
-		viajes.add(viaje);
+		viajes.add(viaje);//guarda el historial de viajes del conductor
 	}
 
 }
