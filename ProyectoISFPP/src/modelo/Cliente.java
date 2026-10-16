@@ -20,17 +20,12 @@ public class Cliente {
 	}
 
 	public boolean enViaje() {
-
 		for (Viaje viaje : viajes) {
-
 			EstadoViaje estado = viaje.estadoActual();
-
 			if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
-
 				return true;
 			}
 		}
-
 		return false;
 	}
 

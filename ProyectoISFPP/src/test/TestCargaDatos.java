@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -16,14 +17,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import datos.ArchivoInvalidoException;
-import datos.CargaDatos;
-import datos.CargaServicios;
-import datos.CargaUsuarios;
-import datos.CargaVehiculos;
 import datos.Configuracion;
-import datos.Datos;
+import datos.DAOFactory;
+import datos.DAOLoader;
+import datos.ServicioDaoTxt;
+import datos.UsuarioDaoTxt;
+import datos.VehiculoDaoTxt;
 import enums.TipoServicio;
 import logica.GeneradorUbicacion;
+import modelo.Servicio;
 import modelo.Usuario;
 import modelo.Vehiculo;
 
@@ -31,14 +33,20 @@ class TestCargaDatos {
 
 	private static Configuracion config;
 	private static GeneradorUbicacion generador;
-	private static Datos datos;
+	private static List<Servicio> servicios;
+	private static Map<String, Vehiculo> vehiculos;
+	private static List<Usuario> usuarios;
 
 	@BeforeAll
 	static void cargarDatosReales() {
 		config = new Configuracion();
 		generador = new GeneradorUbicacion(config.getLatitud1(), config.getLongitud1(), config.getLatitud2(),
 				config.getLongitud2());
-		datos = CargaDatos.cargar(config);
+
+		DAOFactory fabrica = DAOLoader.getFactory();
+		servicios = fabrica.getServicioDAO().obtenerTodos();
+		vehiculos = fabrica.getVehiculoDAO().obtenerTodos();
+		usuarios = fabrica.getUsuarioDAO().obtenerTodos(vehiculos);
 	}
 
 	// crea un archivo temporal con el contenido indicado
@@ -50,14 +58,12 @@ class TestCargaDatos {
 
 	@Test
 	void cargaServicios() {
-		assertEquals(6, datos.getServicios().size());
-		assertEquals(2000, datos.getServicios().get(0).getTarifaBase(), 0.001);
+		assertEquals(6, servicios.size());
+		assertEquals(2000, servicios.get(0).getTarifaBase(), 0.001);
 	}
 
 	@Test
 	void cargaVehiculosConUnoYDosTiposDeServicio() {
-		Map<String, Vehiculo> vehiculos = datos.getVehiculos();
-
 		assertEquals(15, vehiculos.size());
 		assertEquals(2, vehiculos.get("AB456DE").getTipoServicios().size());
 		assertTrue(vehiculos.get("AB456DE").getTipoServicios().contains(TipoServicio.ENVIOS));
@@ -67,14 +73,14 @@ class TestCargaDatos {
 
 	@Test
 	void cargaUsuariosYConductores() {
-		assertEquals(50, datos.getUsuarios().size());
-		assertEquals(10, datos.getUsuarios().stream().filter(u -> u.getConductor() != null).count());
+		assertEquals(50, usuarios.size());
+		assertEquals(10, usuarios.stream().filter(u -> u.getConductor() != null).count());
 
-		Usuario juan = datos.getUsuarios().get(0);
+		Usuario juan = usuarios.get(0);
 		assertEquals("A13-B1-D1-E1", juan.getConductor().getLicenciaConducir());
 		assertEquals(3, juan.getConductor().getVehiculos().size());
 
-		Usuario maria = datos.getUsuarios().get(1); // solo cliente
+		Usuario maria = usuarios.get(1); // solo cliente
 		assertNull(maria.getConductor());
 	}
 
@@ -85,7 +91,7 @@ class TestCargaDatos {
 		Path f = archivo(carpeta, "# comentario\nEstandar;2000;200;100;AUTO;LUJO;PASAJEROS;\n");
 
 		ArchivoInvalidoException e = assertThrows(ArchivoInvalidoException.class,
-				() -> CargaServicios.cargar(f.toString()));
+				() -> new ServicioDaoTxt(f.toString()).obtenerTodos());
 		assertEquals(2, e.getNumeroLinea());
 	}
 
@@ -93,44 +99,43 @@ class TestCargaDatos {
 	void vehiculoConCamposDeMenos(@TempDir Path carpeta) throws IOException {
 		Path f = archivo(carpeta, "AB123CD;Ford Ka;4;AUTO;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> CargaVehiculos.cargar(f.toString(), generador));
+		assertThrows(ArchivoInvalidoException.class, () -> new VehiculoDaoTxt(f.toString(), generador).obtenerTodos());
 	}
 
 	@Test
 	void vehiculoConPatenteRepetida(@TempDir Path carpeta) throws IOException {
-		Path f = archivo(carpeta, "AB123CD;Ford Ka;4;AUTO;ESTANDAR;PASAJEROS;\n"
-				+ "AB123CD;Fiat Uno;4;AUTO;ESTANDAR;PASAJEROS;\n");
+		Path f = archivo(carpeta,
+				"AB123CD;Ford Ka;4;AUTO;ESTANDAR;PASAJEROS;\n" + "AB123CD;Fiat Uno;4;AUTO;ESTANDAR;PASAJEROS;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> CargaVehiculos.cargar(f.toString(), generador));
+		assertThrows(ArchivoInvalidoException.class, () -> new VehiculoDaoTxt(f.toString(), generador).obtenerTodos());
 	}
 
 	@Test
 	void usuarioConLicenciaSinPatente(@TempDir Path carpeta) throws IOException {
 		Path f = archivo(carpeta, "Ana;+54911;ana@email.com;B1;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> CargaUsuarios.cargar(f.toString(), datos.getVehiculos()));
+		assertThrows(ArchivoInvalidoException.class, () -> new UsuarioDaoTxt(f.toString()).obtenerTodos(vehiculos));
 	}
 
 	@Test
 	void usuarioConPatenteInexistente(@TempDir Path carpeta) throws IOException {
 		Path f = archivo(carpeta, "Ana;+54911;ana@email.com;B1;ZZZ999;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> CargaUsuarios.cargar(f.toString(), datos.getVehiculos()));
+		assertThrows(ArchivoInvalidoException.class, () -> new UsuarioDaoTxt(f.toString()).obtenerTodos(vehiculos));
 	}
 
 	@Test
 	void vehiculoConDosConductores(@TempDir Path carpeta) throws IOException {
-		Path f = archivo(carpeta,
-				"Ana;+54911;ana@email.com;B1;AB456DE;\nLuis;+54912;luis@email.com;B1;AB456DE;\n");
+		Path f = archivo(carpeta, "Ana;+54911;ana@email.com;B1;AB456DE;\nLuis;+54912;luis@email.com;B1;AB456DE;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> CargaUsuarios.cargar(f.toString(), datos.getVehiculos()));
+		assertThrows(ArchivoInvalidoException.class, () -> new UsuarioDaoTxt(f.toString()).obtenerTodos(vehiculos));
 	}
 
 	@Test
 	void emailRepetido(@TempDir Path carpeta) throws IOException {
 		Path f = archivo(carpeta, "Ana;+54911;mismo@email.com;\nLuis;+54912;mismo@email.com;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> CargaUsuarios.cargar(f.toString(), datos.getVehiculos()));
+		assertThrows(ArchivoInvalidoException.class, () -> new UsuarioDaoTxt(f.toString()).obtenerTodos(vehiculos));
 	}
 
 	// ---------- configuracion ----------
