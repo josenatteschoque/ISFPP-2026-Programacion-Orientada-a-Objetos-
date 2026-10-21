@@ -1,7 +1,7 @@
 package test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+//import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,32 +16,28 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import datos.ArchivoInvalidoException;
-import datos.Configuracion;
-import datos.DAOFactory;
-import datos.DAOLoader;
-import datos.ServicioDaoTxt;
-import datos.UsuarioDaoTxt;
-import datos.VehiculoDaoTxt;
+import datos.dao.DAOFactory;
+import datos.dao.DAOLoader;
+import datos.dao.txt.ArchivoInvalidoException;
+import datos.dao.txt.ServicioDaoTxt;
+import datos.dao.txt.UsuarioDaoTxt;
+import datos.dao.txt.VehiculoDaoTxt;
 import enums.TipoServicio;
-import logica.GeneradorUbicacion;
+//import logica.GeneradorUbicacion;
 import modelo.Servicio;
 import modelo.Usuario;
 import modelo.Vehiculo;
 
 class TestCargaDatos {
 
-	private static Configuracion config;
-	private static GeneradorUbicacion generador;
+//	private static GeneradorUbicacion generador;
 	private static List<Servicio> servicios;
 	private static Map<String, Vehiculo> vehiculos;
 	private static List<Usuario> usuarios;
 
 	@BeforeAll
 	static void cargarDatosReales() {
-		config = new Configuracion();
-		generador = new GeneradorUbicacion(config.getLatitud1(), config.getLongitud1(), config.getLatitud2(),
-				config.getLongitud2());
+		//generador = new GeneradorUbicacion(-42.87689, -65.20872, -42.57303, -64.78616);
 
 		DAOFactory fabrica = DAOLoader.getFactory();
 		servicios = fabrica.getServicioDAO().obtenerTodos();
@@ -68,7 +64,7 @@ class TestCargaDatos {
 		assertEquals(2, vehiculos.get("AB456DE").getTipoServicios().size());
 		assertTrue(vehiculos.get("AB456DE").getTipoServicios().contains(TipoServicio.ENVIOS));
 		assertEquals(1, vehiculos.get("AD123BC").getTipoServicios().size());
-		assertNotNull(vehiculos.get("AD123BC").getUbicacion());
+		assertNull(vehiculos.get("AD123BC").getUbicacion());
 	}
 
 	@Test
@@ -99,7 +95,7 @@ class TestCargaDatos {
 	void vehiculoConCamposDeMenos(@TempDir Path carpeta) throws IOException {
 		Path f = archivo(carpeta, "AB123CD;Ford Ka;4;AUTO;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> new VehiculoDaoTxt(f.toString(), generador).obtenerTodos());
+		assertThrows(ArchivoInvalidoException.class, () -> new VehiculoDaoTxt(f.toString()/*, generador*/).obtenerTodos());
 	}
 
 	@Test
@@ -107,7 +103,7 @@ class TestCargaDatos {
 		Path f = archivo(carpeta,
 				"AB123CD;Ford Ka;4;AUTO;ESTANDAR;PASAJEROS;\n" + "AB123CD;Fiat Uno;4;AUTO;ESTANDAR;PASAJEROS;\n");
 
-		assertThrows(ArchivoInvalidoException.class, () -> new VehiculoDaoTxt(f.toString(), generador).obtenerTodos());
+		assertThrows(ArchivoInvalidoException.class, () -> new VehiculoDaoTxt(f.toString()/*, generador*/).obtenerTodos());
 	}
 
 	@Test
@@ -142,14 +138,11 @@ class TestCargaDatos {
 
 	@Test
 	void configuracionInexistente() {
-		assertThrows(IllegalStateException.class, () -> new Configuracion("noexiste.properties"));
-	}
+		assertThrows(IllegalStateException.class, () -> DAOLoader.crearFactory("noexiste.properties"));	}
 
 	@Test
 	void configuracionSinUnaPropiedad(@TempDir Path carpeta) throws IOException {
 		Path f = archivo(carpeta, "usuario=usuarios.txt\n");
-		Configuracion incompleta = new Configuracion(f.toString());
-
-		assertThrows(IllegalStateException.class, () -> incompleta.getArchivoServicios());
+		assertThrows(IllegalStateException.class, () -> DAOLoader.crearFactory(f.toString()));
 	}
 }

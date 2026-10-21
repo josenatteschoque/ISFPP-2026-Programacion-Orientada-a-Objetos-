@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import datos.LectorArchivo;
-import datos.Linea;
+import datos.dao.txt.LectorArchivo;
+import datos.dao.txt.Linea;
 
 public class TestLectorArchivo {
 

@@ -1,4 +1,4 @@
-package datos;
+package datos.dao;
 
 public interface DAOFactory {
 

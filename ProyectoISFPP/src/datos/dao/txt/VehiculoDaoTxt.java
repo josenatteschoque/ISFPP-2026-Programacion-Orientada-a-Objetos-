@@ -1,13 +1,14 @@
-package datos;
+package datos.dao.txt;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import datos.dao.VehiculoDAO;
 import enums.CategoriaVehiculo;
 import enums.TipoServicio;
 import enums.TipoVehiculo;
-import logica.GeneradorUbicacion;
+//import logica.GeneradorUbicacion;
 import modelo.Vehiculo;
 
 public class VehiculoDaoTxt implements VehiculoDAO {
@@ -15,11 +16,11 @@ public class VehiculoDaoTxt implements VehiculoDAO {
 	private static final int CAMPOS_MINIMOS = 6;//son los datos minimos ya que dicho vehiculo debe tener almenos un servicio
 
 	private final String archivo;//se usa para almacenar el nombre del archivo
-	private final GeneradorUbicacion generador;//se usara para la cracion de la ubcacion de dicho vehiculo ya que este no cuenta con una propia desde el txt
+	//private final GeneradorUbicacion generador;//se usara para la cracion de la ubcacion de dicho vehiculo ya que este no cuenta con una propia desde el txt
 
-	public VehiculoDaoTxt(String archivo, GeneradorUbicacion generador) {
+	public VehiculoDaoTxt(String archivo /*, GeneradorUbicacion generador*/) {
 		this.archivo = archivo;
-		this.generador = generador;
+		//this.generador = generador;
 	}
 
 	@Override
@@ -46,7 +47,7 @@ public class VehiculoDaoTxt implements VehiculoDAO {
 		try {
 			Vehiculo vehiculo = new Vehiculo(c.get(0), c.get(1), Integer.parseInt(c.get(2)),
 					TipoVehiculo.valueOf(c.get(3)), CategoriaVehiculo.valueOf(c.get(4)),
-					TipoServicio.valueOf(c.get(5)), generador.generar());
+					TipoServicio.valueOf(c.get(5)));
 			// si trae un segundo tipo de servicio se le agraga al vehiculo
 			for (int i = CAMPOS_MINIMOS; i < c.size(); i++) {
 				vehiculo.agregarTipoServicio(TipoServicio.valueOf(c.get(i)));

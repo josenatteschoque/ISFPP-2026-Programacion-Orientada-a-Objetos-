@@ -1,4 +1,4 @@
-package datos;
+package datos.dao;
 
 import java.util.Map;
 
