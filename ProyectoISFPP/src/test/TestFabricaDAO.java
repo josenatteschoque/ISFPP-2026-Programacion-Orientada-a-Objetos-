@@ -25,19 +25,19 @@ import modelo.Vehiculo;
 
 class TestFabricaDAO {
 
-	// fabrica con archivos que NO existen: sirve para comprobar cuando se lee
+	// Fabrica con archivos que NO existen: sirve para comprobar cuando se lee
 	private DAOFactory fabricaSinArchivos() {
 		return new TxtDAOFactory("no_existe_servicios.txt", "no_existe_vehiculos.txt", "no_existe_usuarios.txt");
 	}
 
-	// fabrica con los archivos reales del proyecto
+	// Fabrica con los archivos reales del proyecto
 	private DAOFactory fabricaReal() {
 		return new TxtDAOFactory("servicios.txt", "vehiculos.txt", "usuarios.txt");
 	}
 
 	@Test
 	void crearLaFabricaNoLeeNingunArchivo() {
-		// si leyera algo, fallaria porque los archivos no existen
+		// Si leyera algo, fallaria porque los archivos no existen
 		assertDoesNotThrow(() -> fabricaSinArchivos());
 	}
 
@@ -54,14 +54,14 @@ class TestFabricaDAO {
 	void el_archivo_se_lee_recien_al_pedir_los_datos() {
 		DAOFactory fabrica = fabricaSinArchivos();
 
-		// recien aca se intenta abrir el archivo y falla porque no existe
+		// Recien aca se intenta abrir el archivo y falla porque no existe
 		assertThrows(IllegalStateException.class, () -> fabrica.getServicioDAO().obtenerTodos());
 		assertThrows(IllegalStateException.class, () -> fabrica.getVehiculoDAO().obtenerTodos());
 	}
 
 	@Test
 	void la_fabrica_entrega_el_dao_de_txt_de_cada_entidad() {
-		DAOFactory fabrica = fabricaReal(); // se usa como la interfaz, no como TxtDAOFactory
+		DAOFactory fabrica = fabricaReal(); // Se usa como la interfaz, no como TxtDAOFactory
 
 		assertTrue(fabrica.getServicioDAO() instanceof ServicioDaoTxt);
 		assertTrue(fabrica.getVehiculoDAO() instanceof VehiculoDaoTxt);
@@ -72,7 +72,7 @@ class TestFabricaDAO {
 	void cada_llamada_a_la_fabrica_entrega_un_dao_nuevo() {
 		DAOFactory fabrica = fabricaReal();
 
-		// la fabrica no guarda los DAO que crea
+		// La fabrica no guarda los DAO que crea
 		assertNotSame(fabrica.getServicioDAO(), fabrica.getServicioDAO());
 	}
 
@@ -83,7 +83,7 @@ class TestFabricaDAO {
 		Servicio primero = dao.obtenerTodos().get(0);
 		Servicio segundo = dao.obtenerTodos().get(0);
 
-		// mismos datos pero objetos distintos: por eso Sistema carga una sola vez y guarda el resultado
+		// Mismos datos pero objetos distintos: por eso Sistema carga una sola vez y guarda el resultado
 		assertEquals(primero.getClass(), segundo.getClass());
 		assertNotSame(primero, segundo);
 	}

@@ -22,7 +22,7 @@ public class LectorArchivo {
 					lineas.add(new Linea(numero, separarCampos(texto)));
 				}
 			}
-			lector.close();	//Una ves terminamos de leer el archivo cerramso el lector
+			lector.close();	//Una ves terminamos de leer el archivo cerramos el lector
 		} catch (FileNotFoundException e) {
 			throw new IllegalStateException("No se encontro el archivo " + nombreArchivo);
 		}
