@@ -2,9 +2,10 @@ package datos.dao;
 
 import java.util.Map;
 
+import datos.dto.VehiculoDTO;
 import modelo.Vehiculo;
 
 public interface VehiculoDAO {
 
-	Map<String, Vehiculo> obtenerTodos();
+	Map<String, VehiculoDTO> obtenerTodos();
 }

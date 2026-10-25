@@ -1,15 +1,17 @@
 package datos.dao.txt;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import datos.dao.VehiculoDAO;
+import datos.dto.VehiculoDTO;
 import enums.CategoriaVehiculo;
 import enums.TipoServicio;
 import enums.TipoVehiculo;
 //import logica.GeneradorUbicacion;
-import modelo.Vehiculo;
+
 
 public class VehiculoDaoTxt implements VehiculoDAO {
 
@@ -24,11 +26,14 @@ public class VehiculoDaoTxt implements VehiculoDAO {
 	}
 
 	@Override
-	public Map<String, Vehiculo> obtenerTodos() {
-		Map<String, Vehiculo> vehiculos = new LinkedHashMap<>(); // Se crea un map para almacenar todos los vehiculos de manera que se pueda buscar usando como llave su matricula
+	public Map<String, VehiculoDTO> obtenerTodos() {
+		Map<String, VehiculoDTO> vehiculos = new LinkedHashMap<>(); // Se crea un map para almacenar todos los vehiculos de manera que se pueda buscar usando como llave su matricula
+		
 		for (Linea linea : LectorArchivo.leer(archivo)) { // Lee cada linea de la list que contiene todas las lineas del txt
-			Vehiculo vehiculo = crear(linea);	// Se crea un nuevo vehiculo dada dicha linea y el metodo crear valida si se puede crear
+			VehiculoDTO vehiculo = crear(linea);	// Se crea un nuevo vehiculo dada dicha linea y el metodo crear valida si se puede crear
+			
 			if (vehiculos.containsKey(vehiculo.getPatente())) {	// Verifica que dicha patente del vehiculo no haya sido registrada antes
+				
 				throw new ArchivoInvalidoException(archivo, linea.getNumero(),	// Si es asi lanza una excepcion que la patente esta repetida
 						"Patente repetida " + vehiculo.getPatente());
 			}
@@ -37,22 +42,36 @@ public class VehiculoDaoTxt implements VehiculoDAO {
 		return vehiculos;	// Retorna el map de vehiculos cargados del txt o almenos los que son validos
 	}
 
-	private Vehiculo crear(Linea linea) {
+	private VehiculoDTO crear(Linea linea) {
 		List<String> c = linea.getCampos();	// Se le asigna dicha linea del txt a una nueva list
 		if (c.size() < CAMPOS_MINIMOS) {	// Valida que tenga los campos minimos requeridos
+			
 			throw new ArchivoInvalidoException(archivo, linea.getNumero(),
 					// Si no es asi lanza una excepcion diciendo que dicha linea no cumple con los campos minimos
 					"Se esperaban al menos " + CAMPOS_MINIMOS + " campos y hay " + c.size());
 		}
 		try {
-			Vehiculo vehiculo = new Vehiculo(c.get(0), c.get(1), Integer.parseInt(c.get(2)),
-					TipoVehiculo.valueOf(c.get(3)), CategoriaVehiculo.valueOf(c.get(4)),
-					TipoServicio.valueOf(c.get(5)));
-			// Si trae un segundo tipo de servicio se le agraga al vehiculo
-			for (int i = CAMPOS_MINIMOS; i < c.size(); i++) {
-				vehiculo.agregarTipoServicio(TipoServicio.valueOf(c.get(i)));
-			}
-			return vehiculo;
+			
+			 // Lista para guardar los servicios del vehiculo
+            List<TipoServicio> tiposServicio = new ArrayList<>();
+            
+            // Recorre los campos desde la posicion 5
+            // y agrega cada tipo de servicio a la lista
+            for (int i = 5; i < c.size(); i++) {
+                tiposServicio.add(TipoServicio.valueOf(c.get(i)));
+            }
+			
+			VehiculoDTO vehiculo = new VehiculoDTO(
+					c.get(0),
+					c.get(1),
+					Integer.parseInt(c.get(2)),
+					TipoVehiculo.valueOf(c.get(3)),
+					CategoriaVehiculo.valueOf(c.get(4)),
+					tiposServicio);			
+			
+			// Devuelve el vehiculo creado
+            return vehiculo;
+			
 		} catch (IllegalArgumentException e) {
 			throw new ArchivoInvalidoException(archivo, linea.getNumero(), "Valor invalido (" + e.getMessage() + ")");
 		}
