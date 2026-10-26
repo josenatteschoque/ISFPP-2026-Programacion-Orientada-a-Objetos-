@@ -17,117 +17,94 @@ import modelo.Vehiculo;
 
 public class SistemaGuardado {
 
-    private final List<Servicio> servicios;
-    private final Map<String, Vehiculo> vehiculos;
-    private final List<Usuario> usuarios;
+	private final List<Servicio> servicios;
+	private final Map<String, Vehiculo> vehiculos;
+	private final List<Usuario> usuarios;
 
-    public SistemaGuardado() {
-        this(DAOLoader.getFactory());
-    }
-    public SistemaGuardado(DAOFactory fabrica) {
+	public SistemaGuardado() {
+		this(DAOLoader.getFactory());
+	}
 
-        // Obtiene los dto mediante los DAO
-        List<ServicioDTO> serviciosDTO = fabrica.getServicioDAO().obtenerTodos();
-        Map<String,VehiculoDTO> vehiculosDTO = fabrica.getVehiculoDAO().obtenerTodos();
-        List<UsuarioDTO> usuariosDTO = fabrica.getUsuarioDAO().obtenerTodos(vehiculosDTO);
+	public SistemaGuardado(DAOFactory fabrica) {
 
-        //Convierte los servicios dto al modelo
-        servicios = new ArrayList<>();
+		// Obtiene los dto mediante los DAO
+		List<ServicioDTO> serviciosDTO = fabrica.getServicioDAO().obtenerTodos();
+		Map<String, VehiculoDTO> vehiculosDTO = fabrica.getVehiculoDAO().obtenerTodos();
+		List<UsuarioDTO> usuariosDTO = fabrica.getUsuarioDAO().obtenerTodos();
 
-        for (ServicioDTO dto : serviciosDTO) {
-        	
-            Servicio servicio = new Servicio(
-                dto.getNombre(),
-                dto.getTarifaBase(),
-                dto.getPrecioKm(),
-                dto.getPrecioMinuto(),
-                dto.getTipoVehiculo(),
-                dto.getCategoriaVehiculo(),
-                dto.getTipoServicio()
-            );
-             servicios.add(servicio);
-        }
-        //Convierte los vehiculos dto al modelo
-        vehiculos = new LinkedHashMap<>();
+		// Convierte los servicios dto al modelo
+		servicios = new ArrayList<>();
 
-        for (VehiculoDTO dto : vehiculosDTO.values()) {
-            List<TipoServicio> tipos = dto.getTiposServicio();
+		for (ServicioDTO dto : serviciosDTO) {
 
-            if (tipos == null || tipos.isEmpty()) {
-                throw new IllegalArgumentException(
-                    "El vehiculo no tiene servicios"
-                );
-            }
-            // Crea el vehiculo con su primer servicio
-            Vehiculo vehiculo = new Vehiculo(
-                dto.getPatente(),
-                dto.getModelo(),
-                dto.getCapacidadPasajeros(),
-                dto.getTipoVehiculo(),
-                dto.getCategoriaVehiculo(),
-                tipos.get(0)
-            );
-            // Agrega los otros servicios
-            for (int i = 1; i < tipos.size(); i++) {
-                vehiculo.agregarTipoServicio(tipos.get(i));
-            }
-            vehiculos.put(vehiculo.getPatente(), vehiculo);
-        }
-        //Convierte los usuarios dto al modelo
-        usuarios = new ArrayList<>();
+			Servicio servicio = new Servicio(dto.getNombre(), dto.getTarifaBase(), dto.getPrecioKm(),
+					dto.getPrecioMinuto(), dto.getTipoVehiculo(), dto.getCategoriaVehiculo(), dto.getTipoServicio());
+			servicios.add(servicio);
+		}
+		// Convierte los vehiculos dto al modelo
+		vehiculos = new LinkedHashMap<>();
 
-        for (UsuarioDTO dto : usuariosDTO) {
-            Usuario usuario = new Usuario(
-                dto.getNombre(),
-                dto.getTelefono(),
-                dto.getEmail()
-            );
+		for (VehiculoDTO dto : vehiculosDTO.values()) {
+			List<TipoServicio> tipos = dto.getTiposServicio();
 
-            // Si tiene lisencia, se registra como conductor
-            if (dto.getLicencia() != null) {
+			if (tipos == null || tipos.isEmpty()) {
+				throw new IllegalArgumentException("El vehiculo no tiene servicios");
+			}
+			// Crea el vehiculo con su primer servicio
+			Vehiculo vehiculo = new Vehiculo(dto.getPatente(), dto.getModelo(), dto.getCapacidadPasajeros(),
+					dto.getTipoVehiculo(), dto.getCategoriaVehiculo(), tipos.get(0));
+			// Agrega los otros servicios
+			for (int i = 1; i < tipos.size(); i++) {
+				vehiculo.agregarTipoServicio(tipos.get(i));
+			}
+			vehiculos.put(vehiculo.getPatente(), vehiculo);
+		}
+		// Convierte los usuarios dto al modelo
+		usuarios = new ArrayList<>();
 
-                List<String> patentes = dto.getPatentes();
+		for (UsuarioDTO dto : usuariosDTO) {
+			Usuario usuario = new Usuario(dto.getNombre(), dto.getTelefono(), dto.getEmail());
 
-                if (patentes == null || patentes.isEmpty()) {
-                    throw new IllegalArgumentException(
-                        "El conductor no tiene vehiculos"
-                    );
-                }
-                // Busca el primer vehiculo en el mapa
-                Vehiculo primero = vehiculos.get(patentes.get(0));
+			// Si tiene lisencia, se registra como conductor
+			if (dto.getLicencia() != null) {
 
-                if (primero == null) {
-                    throw new IllegalArgumentException(
-                        "Patente inexistente: " + patentes.get(0)
-                    );
-                }
+				List<String> patentes = dto.getPatentes();
 
-                usuario.altaConductor(dto.getLicencia(), primero);
+				if (patentes == null || patentes.isEmpty()) {
+					throw new IllegalArgumentException("El conductor no tiene vehiculos");
+				}
+				// Busca el primer vehiculo en el mapa
+				Vehiculo primero = vehiculos.get(patentes.get(0));
 
-                // Agrega los demas vehiculos
-                for (int i = 1; i < patentes.size(); i++) {
-                    Vehiculo extra = vehiculos.get(patentes.get(i));
+				if (primero == null) {
+					throw new IllegalArgumentException("Patente inexistente: " + patentes.get(0));
+				}
 
-                    if (extra == null) {
-                        throw new IllegalArgumentException(
-                            "Patente inexistente: " + patentes.get(i)
-                        );
-                    }
-                    usuario.getConductor().agregarVehiculo(extra);
-                }
-            }
-            usuarios.add(usuario);
-        }
-    }
-    public List<Servicio> getServicios() {
-        return servicios;
-    }
+				usuario.altaConductor(dto.getLicencia(), primero);
 
-    public Map<String, Vehiculo> getVehiculos() {
-        return vehiculos;
-    }
+				// Agrega los demas vehiculos
+				for (int i = 1; i < patentes.size(); i++) {
+					Vehiculo extra = vehiculos.get(patentes.get(i));
 
-    public List<Usuario> getUsuarios() {
-        return usuarios;
-    }
+					if (extra == null) {
+						throw new IllegalArgumentException("Patente inexistente: " + patentes.get(i));
+					}
+					usuario.getConductor().agregarVehiculo(extra);
+				}
+			}
+			usuarios.add(usuario);
+		}
+	}
+
+	public List<Servicio> getServicios() {
+		return servicios;
+	}
+
+	public Map<String, Vehiculo> getVehiculos() {
+		return vehiculos;
+	}
+
+	public List<Usuario> getUsuarios() {
+		return usuarios;
+	}
 }
