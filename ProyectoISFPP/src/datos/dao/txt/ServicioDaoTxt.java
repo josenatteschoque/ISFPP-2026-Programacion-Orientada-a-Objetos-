@@ -8,7 +8,6 @@ import datos.dto.ServicioDTO;
 import enums.CategoriaVehiculo;
 import enums.TipoServicio;
 import enums.TipoVehiculo;
-import modelo.Servicio;
 
 public class ServicioDaoTxt implements ServicioDAO {
 
