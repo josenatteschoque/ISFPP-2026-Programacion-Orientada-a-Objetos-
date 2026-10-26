@@ -19,9 +19,9 @@ import datos.dao.txt.ServicioDaoTxt;
 import datos.dao.txt.TxtDAOFactory;
 import datos.dao.txt.UsuarioDaoTxt;
 import datos.dao.txt.VehiculoDaoTxt;
-import modelo.Servicio;
-import modelo.Usuario;
-import modelo.Vehiculo;
+import datos.dto.ServicioDTO;
+import datos.dto.UsuarioDTO;
+import datos.dto.VehiculoDTO;
 
 class TestFabricaDAO {
 
@@ -80,11 +80,11 @@ class TestFabricaDAO {
 	void cada_llamada_a_obtenerTodos_vuelve_a_crear_los_objetos() {
 		ServicioDAO dao = fabricaReal().getServicioDAO();
 
-		Servicio primero = dao.obtenerTodos().get(0);
-		Servicio segundo = dao.obtenerTodos().get(0);
+		ServicioDTO primero = dao.obtenerTodos().get(0);
+		ServicioDTO segundo = dao.obtenerTodos().get(0);
 
-		// Mismos datos pero objetos distintos: por eso Sistema carga una sola vez y guarda el resultado
-		assertEquals(primero.getClass(), segundo.getClass());
+		// Mismos datos pero objetos distintos: por eso SistemaGuardado carga una sola vez y guarda el resultado
+		assertEquals(primero.getNombre(), segundo.getNombre());
 		assertNotSame(primero, segundo);
 	}
 
@@ -96,9 +96,9 @@ class TestFabricaDAO {
 		VehiculoDAO vehiculoDAO = fabrica.getVehiculoDAO();
 		UsuarioDAO usuarioDAO = fabrica.getUsuarioDAO();
 
-		List<Servicio> servicios = servicioDAO.obtenerTodos();
-		Map<String, Vehiculo> vehiculos = vehiculoDAO.obtenerTodos();
-		List<Usuario> usuarios = usuarioDAO.obtenerTodos(vehiculos);
+		List<ServicioDTO> servicios = servicioDAO.obtenerTodos();
+		Map<String, VehiculoDTO> vehiculos = vehiculoDAO.obtenerTodos();
+		List<UsuarioDTO> usuarios = usuarioDAO.obtenerTodos();
 
 		assertEquals(6, servicios.size());
 		assertEquals(15, vehiculos.size());
