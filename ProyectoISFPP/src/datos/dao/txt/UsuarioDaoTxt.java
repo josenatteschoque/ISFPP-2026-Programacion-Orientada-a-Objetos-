@@ -3,20 +3,17 @@ package datos.dao.txt;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import datos.dao.UsuarioDAO;
 import datos.dto.UsuarioDTO;
-import datos.dto.VehiculoDTO;
-import modelo.Usuario;
-import modelo.Vehiculo;
 
 public class UsuarioDaoTxt implements UsuarioDAO {
 
 	private static final int CAMPOS_USUARIO = 3; // Nombre, telefono y email
 	private static final int POSICION_LICENCIA = 3; // Indice de la posicion de la licencia de conducir
-	private static final int POSICION_PRIMERA_PATENTE = 4; // Indice de la posicion de la primer patente del vehiculo que le pertenece
+	private static final int POSICION_PRIMERA_PATENTE = 4; // Indice de la posicion de la primer patente del vehiculo
+															// que le pertenece
 
 	private final String archivo;
 
@@ -26,71 +23,65 @@ public class UsuarioDaoTxt implements UsuarioDAO {
 
 	// Recibe el mapa de vehiculos para poder buscar cada patente
 	@Override
-	public List<UsuarioDTO> obtenerTodos(Map<String, VehiculoDTO> vehiculos) {
+	public List<UsuarioDTO> obtenerTodos() {
 
 		List<UsuarioDTO> usuarios = new ArrayList<>(); // Crea una list para guardar los usuarios del archivo.txt
-		Set<String> emails = new HashSet<>(); // Para detectar emails repetidos ya que set solo es una coleccion de elementos unicos
+		Set<String> emails = new HashSet<>(); // Para detectar emails repetidos ya que set solo es una coleccion de
+												// elementos unicos
 		Set<String> patentesAsignadas = new HashSet<>(); // Para detectar vehiculos con dos dueños
 
-		for (Linea linea : LectorArchivo.leer(archivo)) { // Con un for each recorremos la list con todas las lineas del archivo
-			UsuarioDTO usuario = crear(linea, vehiculos, patentesAsignadas); // Crea un objeto de tipo usuario pidiendole que lo haga el metodo crear que hace unas verificaciones antes de crearlo
+		for (Linea linea : LectorArchivo.leer(archivo)) { // Con un for each recorremos la list con todas las lineas del
+															// archivo
+			UsuarioDTO usuario = crear(linea , patentesAsignadas); // Crea un objeto de tipo usuario
+																				// pidiendole que lo haga el metodo
+																				// crear que hace unas verificaciones
+																				// antes de crearlo
 
 			if (!emails.add(usuario.getEmail())) { // Add devuelve false si ya estaba
-				throw new ArchivoInvalidoException(archivo, linea.getNumero(),
-						"Email repetido " + usuario.getEmail());
+				throw new ArchivoInvalidoException(archivo, linea.getNumero(), "Email repetido " + usuario.getEmail());
 			}
 			usuarios.add(usuario); // Como es un usuario valido lo agrego a la list
 		}
 		return usuarios; // Retorno la list de usuarios con conductores en alta y usuarios normales
 	}
 
-	private UsuarioDTO crear(Linea linea, Map<String, VehiculoDTO> vehiculos, Set<String> patentesAsignadas) {
+	private UsuarioDTO crear(Linea linea, Set<String> patentesAsignadas) {
 
-		List<String> c = linea.getCampos();	// Asigno la linea de datos del archivo
+		List<String> c = linea.getCampos(); // Asigno la linea de datos del archivo
 
 		int numero = linea.getNumero(); // Asigno de que numero de linea del archivo son dichos datos
 
-		if (c.size() < CAMPOS_USUARIO) { // Me fijo si dicha linea cuenta con la cantidad minima de datos para ser un usuario, si no es asi lanzo una excepcion
+		if (c.size() < CAMPOS_USUARIO) { // Me fijo si dicha linea cuenta con la cantidad minima de datos para ser un
+											// usuario, si no es asi lanzo una excepcion
 			throw new ArchivoInvalidoException(archivo, numero, "Faltan datos (nombre, telefono y email)");
 		}
 
-		 // Lista para almacenar las patentes del conductor
-        List<String> patentes = new ArrayList<>();
-        
-        // Si tiene solo 3 campos, es un usuario sin conductor
-        if (c.size() == CAMPOS_USUARIO) {
-            return new UsuarioDTO(c.get(0),c.get(1),c.get(2),null,patentes);
-        }
-        
-     // Si tiene licencia pero ninguna patente
-        if (c.size() == POSICION_PRIMERA_PATENTE) {
-            throw new ArchivoInvalidoException(archivo,numero,"Tiene licencia pero ninguna patente");
-        }
-        
-        // Recorre las patentes desde la posicion 4
-        for (String patente : c.subList( POSICION_PRIMERA_PATENTE, c.size())) {
+		// Lista para almacenar las patentes del conductor
+		List<String> patentes = new ArrayList<>();
 
-            // Verifica que la patente exista en el mapa
-            if (!vehiculos.containsKey(patente)) {
-                throw new ArchivoInvalidoException(archivo,numero,"La patente " + patente + " no existe");
-            }
-            
-            // Verifica que no haya sido asignada anteriormente
-            if (!patentesAsignadas.add(patente)) {
-                throw new ArchivoInvalidoException(archivo,numero,"La patente " + patente + " ya fue asignada");
-            }
-            
-            // Agrega la patente a la lista del usuario
-            patentes.add(patente);
-        }
-     // Crea el dto con licencia y patentes
-        UsuarioDTO usuario = new UsuarioDTO(
-            c.get(0),
-            c.get(1),
-            c.get(2),
-            c.get(POSICION_LICENCIA),
-            patentes
-        );
-        return usuario;
-    }
-}	
+		// Si tiene solo 3 campos, es un usuario sin conductor
+		if (c.size() == CAMPOS_USUARIO) {
+			return new UsuarioDTO(c.get(0), c.get(1), c.get(2), null, patentes);
+		}
+
+		// Si tiene licencia pero ninguna patente
+		if (c.size() == POSICION_PRIMERA_PATENTE) {
+			throw new ArchivoInvalidoException(archivo, numero, "Tiene licencia pero ninguna patente");
+		}
+
+		// Recorre las patentes desde la posicion 4
+		for (String patente : c.subList(POSICION_PRIMERA_PATENTE, c.size())) {
+
+			// Verifica que no haya sido asignada anteriormente
+			if (!patentesAsignadas.add(patente)) {
+				throw new ArchivoInvalidoException(archivo, numero, "La patente " + patente + " ya fue asignada");
+			}
+
+			// Agrega la patente a la lista del usuario
+			patentes.add(patente);
+		}
+		// Crea el dto con licencia y patentes
+		UsuarioDTO usuario = new UsuarioDTO(c.get(0), c.get(1), c.get(2), c.get(POSICION_LICENCIA), patentes);
+		return usuario;
+	}
+}
