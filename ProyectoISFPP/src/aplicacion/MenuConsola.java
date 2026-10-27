@@ -34,6 +34,7 @@ public class MenuConsola {
 			interfazConsola.mostrarMensaje("\n===== MENU PRINCIPAL =====");
 			interfazConsola.mostrarMensaje("1. Listar usuarios");
 			interfazConsola.mostrarMensaje("2. Elegir usuario");
+			interfazConsola.mostrarMensaje("3. Registrar nuevo usuario");
 			interfazConsola.mostrarMensaje("0. Salir");
 			opcion = leerEntero("Opcion: ");
 
@@ -43,6 +44,9 @@ public class MenuConsola {
 				break;
 			case 2:
 				elegirUsuario();
+				break;
+			case 3:
+				registrarUsuario();
 				break;
 			case 0:
 				interfazConsola.mostrarMensaje("Hasta luego!");
@@ -61,13 +65,43 @@ public class MenuConsola {
 	}
 
 	private void elegirUsuario() {
-		listarUsuarios();
-		int num = leerEntero("Numero de usuario (0 para volver): ");
+		//listarUsuarios();
+		int num = leerEntero("Ingrese el numero de usuario (0 para volver): ");
 		if (num < 1 || num > sistema.getUsuarios().size()) {
 			return;
 		}
 		usuarioActual = sistema.getUsuarios().get(num - 1);
 		menuUsuario();
+	}
+	
+	//Por ahora solo registro usuarios en memoria.
+	//#nombre;telefono;email;licenciaConducir;patente;...
+	private void registrarUsuario() {
+		interfazConsola.mostrarMensaje("Ingrese su nombre:");
+		String nombre = teclado.nextLine().trim();
+		
+		interfazConsola.mostrarMensaje("Ingrese un email:");
+		String email = teclado.nextLine().trim();
+		
+		interfazConsola.mostrarMensaje("Ingrese un telefono:");
+		String telefono = teclado.nextLine().trim();
+		
+		
+		for (int i = 0; i < sistema.getUsuarios().size(); i++) {
+			Usuario u = sistema.getUsuarios().get(i);
+			//Verifico si este usuario esta en la lista
+			//equalsIgnoreCase() Distinge en mayusculas
+			if(email.equalsIgnoreCase(u.getEmail()) ) {
+				interfazConsola.mostrarError("Este usuario ya existe!");
+				return;
+			}
+		}
+		
+		//Creo un nuevo usuario y lo cargo a la lista  
+		Usuario nuevoUsuario = new Usuario(nombre, telefono, email);
+		sistema.getUsuarios().add(nuevoUsuario);
+		interfazConsola.mostrarMensaje("Usuario Registrado Exitosamente.");
+
 	}
 
 	// ---------- MENU DEL USUARIO ----------
