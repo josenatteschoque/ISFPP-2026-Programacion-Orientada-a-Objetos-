@@ -20,13 +20,15 @@ public class SistemaGuardado {
 	private final List<Servicio> servicios;
 	private final Map<String, Vehiculo> vehiculos;
 	private final List<Usuario> usuarios;
+	private final DAOFactory fabrica;   // junto a los otros atributos
 
 	public SistemaGuardado() {
 		this(DAOLoader.getFactory());
 	}
 
 	public SistemaGuardado(DAOFactory fabrica) {
-
+		this.fabrica = fabrica;
+		
 		// Obtiene los dto mediante los DAO
 		List<ServicioDTO> serviciosDTO = fabrica.getServicioDAO().obtenerTodos();
 		Map<String, VehiculoDTO> vehiculosDTO = fabrica.getVehiculoDAO().obtenerTodos();
@@ -107,4 +109,34 @@ public class SistemaGuardado {
 	public List<Usuario> getUsuarios() {
 		return usuarios;
 	}
+	
+	// Pasa los usuarios del modelo a DTO y le pide al DAO que los escriba
+	public void guardarUsuarios() {
+		List<UsuarioDTO> dtos = new ArrayList<>();
+
+		for (Usuario u : usuarios) {
+			String licencia = null;
+			List<String> patentes = new ArrayList<>();
+
+			if (u.getConductor() != null) {
+				licencia = u.getConductor().getLicenciaConducir();
+				for (Vehiculo v : u.getConductor().getVehiculos()) {
+					patentes.add(v.getPatente());
+				}
+			}
+			dtos.add(new UsuarioDTO(u.getNombre(), u.getTelefono(), u.getEmail(), licencia, patentes));
+		}
+		fabrica.getUsuarioDAO().guardarTodos(dtos);
+	}
+
+	// Valida el email, agrega el usuario a la lista y lo guarda en el txt
+	public void registrarUsuario(Usuario nuevo) {
+		for (Usuario u : usuarios) {
+			if (u.getEmail().equalsIgnoreCase(nuevo.getEmail())) {
+				throw new IllegalArgumentException("Ya existe un usuario con ese email");
+			}
+		}
+		usuarios.add(nuevo);
+		guardarUsuarios();
+	}	
 }
