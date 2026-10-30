@@ -50,3 +50,5 @@ Emilia Ramirez;+549114823559;emilia.ramirez@email.com
 Tomas Silva;+549112857401;tomas.silva@email.com
 Florencia Benitez;+549112778008;florencia.benitez@email.com
 jose nattes choque;2804512232;josenatteschoque@email.com
+wilder;2804533615;wilderc338@email.com
+evelyn orellana;2804707569;orellanaeve626@email.com
