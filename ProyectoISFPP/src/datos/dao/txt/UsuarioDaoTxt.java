@@ -8,6 +8,11 @@ import java.util.Set;
 import datos.dao.UsuarioDAO;
 import datos.dto.UsuarioDTO;
 
+//Estos son para cargar los archivos txt 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 public class UsuarioDaoTxt implements UsuarioDAO {
 
 	private static final int CAMPOS_USUARIO = 3; // Nombre, telefono y email
@@ -84,4 +89,33 @@ public class UsuarioDaoTxt implements UsuarioDAO {
 		UsuarioDTO usuario = new UsuarioDTO(c.get(0), c.get(1), c.get(2), c.get(POSICION_LICENCIA), patentes);
 		return usuario;
 	}
+
+	@Override
+	public void guardarTodos(List<UsuarioDTO> usuarios) {
+		// FileWriter sin "append" vacia el archivo y lo escribe de cero
+		try (PrintWriter escritor = new PrintWriter(new FileWriter(archivo))) {
+
+			// Comentario inicial, el lector ignora las lineas que empiezan con #
+			escritor.println("#nombre;telefono;email;licenciaConducir;patente;...");
+
+			for (UsuarioDTO u : usuarios) {
+				StringBuilder linea = new StringBuilder();
+				linea.append(u.getNombre()).append(";")
+					.append(u.getTelefono()).append(";")
+					.append(u.getEmail());
+
+				// Si tiene licencia es conductor: agrego licencia y patentes
+				if (u.getLicencia() != null) {
+					linea.append(";").append(u.getLicencia());
+					for (String patente : u.getPatentes()) {
+						linea.append(";").append(patente);
+					}
+				}
+				escritor.println(linea);
+			}
+		} catch (IOException e) {
+			throw new IllegalStateException("No se pudo guardar el archivo " + archivo);
+		}
+	}
+	
 }
