@@ -32,21 +32,17 @@ public class MenuConsola {
 		int opcion;
 		do {
 			interfazConsola.mostrarMensaje("\n===== MENU PRINCIPAL =====");
-			interfazConsola.mostrarMensaje("1. Listar usuarios");
-			interfazConsola.mostrarMensaje("2. Elegir usuario");
-			interfazConsola.mostrarMensaje("3. Registrar nuevo usuario");
+			interfazConsola.mostrarMensaje("1. Registrarse");
+			interfazConsola.mostrarMensaje("2. Iniciar seccion");
 			interfazConsola.mostrarMensaje("0. Salir");
 			opcion = leerEntero("Opcion: ");
 
 			switch (opcion) {
 			case 1:
-				listarUsuarios();
+				registrarse();
 				break;
 			case 2:
-				elegirUsuario();
-				break;
-			case 3:
-				registrarUsuario();
+				iniciarSesion();
 				break;
 			case 0:
 				interfazConsola.mostrarMensaje("Hasta luego!");
@@ -57,6 +53,72 @@ public class MenuConsola {
 		} while (opcion != 0);
 	}
 
+//Por ahora solo registro usuarios en memoria.
+//#nombre;telefono;email;licenciaConducir;patente;...
+	private void registrarse() {
+		interfazConsola.mostrarMensaje("Ingrese su nombre:");
+		String nombre = teclado.nextLine().trim();
+		
+		interfazConsola.mostrarMensaje("Ingrese un email:");
+		String email = teclado.nextLine().trim();
+		
+		interfazConsola.mostrarMensaje("Ingrese un telefono:");
+		String telefono = teclado.nextLine().trim();
+		
+		if(nombre.isEmpty() || email.isEmpty() || telefono.isEmpty()) {
+			interfazConsola.mostrarError("Los datos ingresados estan vacios!");
+			return;
+		}
+		
+		if (nombre.contains(";") || email.contains(";") || telefono.contains(";")) {
+			interfazConsola.mostrarError("No se permite el caracter ;");
+			return;
+		}
+		
+		Usuario nuevoUsuario = new Usuario(nombre, telefono, email);
+		try {
+			sistema.registrarUsuario(nuevoUsuario);
+			interfazConsola.mostrarMensaje("Usuario Registrado Exitosamente.");
+		} catch (IllegalArgumentException e) {
+			interfazConsola.mostrarError(e.getMessage());
+		}
+		
+		/*	Esto guardaba los usuarios en memoria
+		for (int i = 0; i < sistema.getUsuarios().size(); i++) {
+			Usuario u = sistema.getUsuarios().get(i);
+			//Verifico si este usuario esta en la lista
+			//equalsIgnoreCase() Distinge en mayusculas
+			if(email.equalsIgnoreCase(u.getEmail()) ) {
+				interfazConsola.mostrarError("Este usuario ya existe!");
+				return;
+			}
+		}
+			
+		//Creo un nuevo usuario y lo cargo a la lista  
+		Usuario nuevoUsuario = new Usuario(nombre, telefono, email);
+		sistema.getUsuarios().add(nuevoUsuario);
+		interfazConsola.mostrarMensaje("Usuario Registrado Exitosamente.");
+		*/
+	}
+	
+	//Este metodo lo que hace es buscar si el usuario existe y si no avisar que no esta registrado!
+	private void iniciarSesion() {
+		interfazConsola.mostrarMensaje("Ingrese un email:");
+		String email = teclado.nextLine().trim();
+		for (int i = 0; i < sistema.getUsuarios().size(); i++) {
+			Usuario u = sistema.getUsuarios().get(i);
+			if(email.equalsIgnoreCase(u.getEmail())) {
+				usuarioActual = u;
+				interfazConsola.mostrarMensaje("Bienvenido "+ u.getNombre());
+				menuUsuario();
+				return;
+			}
+		}
+		interfazConsola.mostrarError("No se encontro ningun usuario con ese Email.");
+	}
+	
+/* Estos metodos los deje para el tema de hacer pruebas!! 
+ * No borres nada wilder ojito!!
 	private void listarUsuarios() {
 		for (int i = 0; i < sistema.getUsuarios().size(); i++) {
 			Usuario u = sistema.getUsuarios().get(i);
@@ -73,47 +135,18 @@ public class MenuConsola {
 		usuarioActual = sistema.getUsuarios().get(num - 1);
 		menuUsuario();
 	}
-	
-	//Por ahora solo registro usuarios en memoria.
-	//#nombre;telefono;email;licenciaConducir;patente;...
-	private void registrarUsuario() {
-		interfazConsola.mostrarMensaje("Ingrese su nombre:");
-		String nombre = teclado.nextLine().trim();
-		
-		interfazConsola.mostrarMensaje("Ingrese un email:");
-		String email = teclado.nextLine().trim();
-		
-		interfazConsola.mostrarMensaje("Ingrese un telefono:");
-		String telefono = teclado.nextLine().trim();
-		
-		
-		for (int i = 0; i < sistema.getUsuarios().size(); i++) {
-			Usuario u = sistema.getUsuarios().get(i);
-			//Verifico si este usuario esta en la lista
-			//equalsIgnoreCase() Distinge en mayusculas
-			if(email.equalsIgnoreCase(u.getEmail()) ) {
-				interfazConsola.mostrarError("Este usuario ya existe!");
-				return;
-			}
-		}
-		
-		//Creo un nuevo usuario y lo cargo a la lista  
-		Usuario nuevoUsuario = new Usuario(nombre, telefono, email);
-		sistema.getUsuarios().add(nuevoUsuario);
-		interfazConsola.mostrarMensaje("Usuario Registrado Exitosamente.");
-
-	}
+*/
 
 	// ---------- MENU DEL USUARIO ----------
 
 	private void menuUsuario() {
 		int opcion;
 		do {
-			System.out.println("\n===== " + usuarioActual.getNombre() + " | Rol activo: "
+			interfazConsola.mostrarMensaje("\n===== " + usuarioActual.getNombre() + " | Rol activo: "
 					+ usuarioActual.getRolActivo() + " =====");
 			interfazConsola.mostrarMensaje("1. Cambiar rol");
 			interfazConsola.mostrarMensaje("2. Ir al menu de mi rol");
-			interfazConsola.mostrarMensaje("0. Volver");
+			interfazConsola.mostrarMensaje("0. Cerra sesion");
 			opcion = leerEntero("Opcion: ");
 
 			switch (opcion) {
@@ -141,9 +174,9 @@ public class MenuConsola {
 				: RolUsuario.CLIENTE;
 		try {
 			usuarioActual.cambiarRolActivo(nuevo);
-			System.out.println("Ahora sos " + nuevo);
+			interfazConsola.mostrarMensaje("Ahora sos " + nuevo);
 		} catch (IllegalStateException | IllegalArgumentException e) {
-			System.out.println("No se pudo cambiar: " + e.getMessage());
+			interfazConsola.mostrarError("No se pudo cambiar: " + e.getMessage());
 		}
 	}
 
@@ -185,7 +218,7 @@ public class MenuConsola {
 		}
 		int num = leerEntero("Servicio: ");
 		if (num < 1 || num > sistema.getServicios().size()) {
-			System.out.println("Servicio invalido");
+			interfazConsola.mostrarError("Servicio invalido");
 			return;
 		}
 		Servicio servicio = sistema.getServicios().get(num - 1);
