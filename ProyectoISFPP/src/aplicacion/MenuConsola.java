@@ -166,6 +166,7 @@ public class MenuConsola {
 				interfazConsola.mostrarError("Opcion invalida");
 			}
 		} while (opcion != 0);
+		usuarioActual = null;
 	}
 
 	private void cambiarRol() {
